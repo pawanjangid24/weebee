@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { Get, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
@@ -97,11 +97,20 @@ export class EventsService {
   @Get('events')
   async getEventsWithWorkshops() {
     try{
-      const response = await this.eventRepository.find({
-        relation: ['workshop']
+      const eventResponse = await this.eventRepository.find()
+      const workshopResponse = await this.workshopRepository.find()
+
+      let finalResponse: any[] = []
+
+      eventResponse.map(obj => {
+        const filteredWorkshops = workshopResponse.filter(val => {
+          return val.eventId === obj.id
+        })
+
+        finalResponse.push({ ...obj, workshops: filteredWorkshops})
       })
 
-      return response
+      return finalResponse
     }catch(err){
       throw new Error('TODO task 1');
     }
@@ -176,14 +185,30 @@ export class EventsService {
   @Get('futureevents')
   async getFutureEventWithWorkshops() {
     try{
-      const subQuery = this.workshopRepository.createQueryBuilder('ws')
-                        .where('ws.start >= :now', { now: new Date() })
-      const response = await this.eventRepository.createQueryBuilder('e')
-                        leftJoinAndSelect('e.workshops', 'ws')
-                        .where('e.id IN (' + subQuery.getQuery() + ")")
-                        .getMany()
+      const currentDate = new Date().toISOString()
+      const eventResponse = await this.eventRepository.find({
+        where: {
+          createdAt: MoreThan(currentDate)
+        }
+      })
 
-                        return response
+      const workshopResponse = await this.workshopRepository.find({
+        where: {
+          start: MoreThan(currentDate)
+        }
+      })
+
+      let finalResponse: any[] = []
+
+      eventResponse.map(obj => {
+        const filteredWorkshops = workshopResponse.filter(val => {
+          return val.eventId === obj.id
+        })
+
+        finalResponse.push({ ...obj, workshops: filteredWorkshops})
+      })
+
+      return finalResponse      
     }catch(err) {
       throw new Error('TODO task 2');
     }

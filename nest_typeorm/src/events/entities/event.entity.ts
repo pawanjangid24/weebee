@@ -1,5 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { Workshop } from './workshop.entity'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Event {
@@ -11,7 +10,4 @@ export class Event {
 
   @Column({ type: 'datetime' })
   createdAt: string;
-
-  @OneToMany(() => Workshop, workshop => workshop.event)
-  workshops: Promise<Workshop>
 }
