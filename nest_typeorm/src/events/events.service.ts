@@ -2,12 +2,15 @@ import { Repository } from 'typeorm';
 import { Get, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
+import { Workshop } from './entities/workshop.entity';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event)
     private eventRepository: Repository<Event>,
+    @InjectRepository(Event)
+    private workshopRepository: Repository<Workshop>
   ) {}
 
   getWarmupEvents() {
@@ -93,7 +96,15 @@ export class EventsService {
 
   @Get('events')
   async getEventsWithWorkshops() {
-    throw new Error('TODO task 1');
+    try{
+      const response = await this.eventRepository.find({
+        relation: ['workshop']
+      })
+
+      return response
+    }catch(err){
+      throw new Error('TODO task 1');
+    }
   }
 
   /* TODO: complete getFutureEventWithWorkshops so that it returns events with workshops, that have not yet started
@@ -164,6 +175,18 @@ export class EventsService {
      */
   @Get('futureevents')
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    try{
+      const subQuery = this.workshopRepository.createQueryBuilder('ws')
+                        .where('ws.start >= :now', { now: new Date() })
+      const response = await this.eventRepository.createQueryBuilder('e')
+                        leftJoinAndSelect('e.workshops', 'ws')
+                        .where('e.id IN (' + subQuery.getQuery() + ")")
+                        .getMany()
+
+                        return response
+    }catch(err) {
+      throw new Error('TODO task 2');
+    }
+    
   }
 }
