@@ -86,6 +86,12 @@ export class MenuItemsService {
     ]
   */
   async getMenuItems() {
-    throw new Error('TODO in task 3');
+    try{
+        const response = await this.menuItemRepository.find()
+        return response
+    }catch(err) {
+        throw new Error('TODO in task 3');
+    }
+    
   }
 }
